@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.city.my.mapper.RoleMapper">
+	<resultMap type="com.city.my.domain.Role" id="roleRM">
+		<id property="id" column="roler_id"/>
+		<result property="rolername" column="rolername"/>
+		<result property="rolerprivate" column="rolerprivate"/>
+		<result property="rolernote" column="rolernote"/>
+		<result property="state" column="state"/>
+	</resultMap>
+	<select id="find" parameterType="map" resultMap="roleRM">
+		select * from roler_c
+		where 1=1
+	</select>
+	
+	<select id="get" parameterType="string" resultMap="roleRM">
+		select * from roler_c
+		where roler_id=#{pid}
+	</select>
+	
+	 <insert id="insert" parameterType="com.city.my.domain.Role">
+	insert into roler_c
+	(roler_id,rolername,rolerprivate,rolernote,state)
+	values
+	(#{id},#{rolername},#{rolerprivate},#{rolernote},#{state})
+	</insert> 
+	
+	<!-- 删除一条 -->
+	<delete id="deleteById" parameterType="string">
+		delete from roler_c
+		where roler_id=#{pid}
+	</delete>
+	
+	<!-- 删除多条（一维字符串数组） -->
+	<delete id="delete" parameterType="string">
+		delete from roler_c
+		where roler_id in
+		<foreach collection="array" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

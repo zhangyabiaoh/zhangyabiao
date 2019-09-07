@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.city.my.mapper.ContractMapper">
+	<resultMap type="com.city.my.domain.Contract" id="contractRM">
+		<id property="id" column="CONTRACT_ID"/>
+		<!-- 虚拟字段 -->
+		<result property="cpnum" column="CPNUM"/>
+		<result property="extnum" column="EXTNUM"/> 
+		
+		<result property="c_offer" column="c_offer"/>
+		<result property="contract_num" column="contract_num"/>
+		<result property="sign_date" column="sign_date"/>
+		<result property="cinput_by" column="cinput_by"/>
+		<result property="checked_by" column="checked_by"/>
+		<result property="inspector" column="INSPECTOR"/>
+		<result property="amount" column="amount"/>
+		<result property="importance_num" column="importance_num"/>
+		<result property="crequests" column="crequests"/>
+		<result property="customer" column="customer"/>
+		<result property="delivery_date" column="delivery_date"/>	
+		<result property="ship_date" column="ship_date"/>
+		<result property="trade_clause" column="trade_clause"/>
+		<result property="accountfor" column="accountfor"/>
+		<result property="print_style" column="print_style"/>
+		<result property="pre_state" column="pre_state"/>
+		<result property="c_state" column="c_state"/>
+		<result property="output_state" column="output_state"/>
+		
+		<result property="created_by" column="created_by"/>
+		<result property="created_dept" column="created_dept"/>
+		<result property="created_date" column="created_date"/>	
+	</resultMap>
+	
+	<!-- 合同和货物（一对多） -->	
+	<resultMap type="com.city.my.vo.ContractVO" id="contractVORM" extends="contractRM">
+		<collection property="contractProducts" ofType="com.city.my.vo.ContractProductVO">
+			<id property="id" column="CONTRACT_PRODUCT_ID"/>
+			<result property="product_num" column="PRODUCT_NUM"/>
+			<result property="product_img" column="PRODUCT_IMG"/>
+			<result property="product_description" column="product_description"/>
+			<result property="product_number" column="product_number"/>
+			<result property="output_number" column="output_number"/>
+			<result property="load_rate" column="load_rate"/>
+			<result property="boxs_num" column="boxs_num"/>
+			<result property="pack_unit" column="pack_unit"/>
+			<result property="product_price" column="product_price"/>
+			<result property="product_amount" column="product_amount"/>
+			<result property="finised" column="finised"/>
+			<result property="exts" column="EXTS"/>
+			<result property="orderno" column="ORDER_NO"/>
+	
+		
+			<!-- 货物和生产厂家（多对一） -->
+			<association property="factory" javaType="com.city.my.domain.Factory">
+				<id property="id" column="FACTORY_ID"/>
+				<result property="fullName" column="factory_fullname"/>
+				<result property="factoryName" column="factory_shortname"/>
+				<result property="contacts" column="factory_contacts"/>
+				<result property="phone" column="contactphone"/>
+			</association>
+			
+			<!-- 货物和附件（一对多） -->
+			<collection property="extCproducts" ofType="com.city.my.vo.ExtCproductVO">
+				<id property="id" column="EXT_CPRODUCT_ID"/>
+	
+				<result property="ctype" column="CTYPE"/>
+				
+				<result property="productNo" column="EXT_PRODUCT_NO"/>
+				<result property="productImage" column="EXT_PRODUCT_IMAGE"/>
+				<result property="productDesc" column="EXT_PRODUCT_DESC"/>
+				<result property="cnumber" column="EXT_CNUMBER"/>
+				<result property="packingUnit" column="EXT_PACKING_UNIT"/>
+				<result property="price" column="EXT_PRICE"/>
+				<result property="amount" column="EXT_AMOUNT"/>
+				<result property="productRequest" column="PRODUCT_REQUEST"/>
+				<result property="orderNo" column="EXT_ORDER_NO"/>	
+				
+				<!-- 附件和生产厂家（多对一） -->
+				<association property="factory" javaType="com.city.my.domain.Factory">
+					<id property="id" column="EXT_FACTORY_ID"/>
+					<result property="fullName" column="EXT_FULL_NAME"/>
+					<result property="factoryName" column="EXT_FACTORY_NAME"/>
+					<result property="contacts" column="EXT_CONTACTS"/>
+					<result property="phone" column="ext_phone"/>
+				</association>
+			</collection>
+		</collection>
+	</resultMap>
+	
+	<select id="find" parameterType="map" resultMap="contractRM">
+		SELECT 
+		  (SELECT COUNT(*) FROM contract_product_c
+		  WHERE contract_id=c.contract_id)  AS cpnum,
+		  (SELECT COUNT(*) FROM ext_cproduct_c
+		          WHERE contract_product_id IN (SELECT contract_product_id FROM contract_product_c WHERE contract_id=c.contract_id)
+		      ) AS extnum,
+		  ( 
+		      IFNULL((SELECT SUM(PRODUCT_NUMBER*PRODUCT_PRICE) AS cptotal FROM contract_product_c
+		      WHERE contract_id =c.contract_id),0)
+		      +
+		      IFNULL(
+		      (SELECT SUM(cnumber*price) AS exttotal FROM ext_cproduct_c
+		       WHERE contract_product_id IN (SELECT contract_product_id FROM contract_product_c WHERE contract_id=c.contract_id))
+		       ,0)
+		  ) AS AMOUNT,
+		c.CONTRACT_ID,c.C_OFFER,c.CONTRACT_NUM,c.SIGN_DATE,c.CINPUT_BY,c.CHECKED_BY,c.INSPECTOR,c.IMPORTANCE_NUM,c.CREQUESTS,c.CUSTOMER,
+		c.DELIVERY_DATE,c.SHIP_DATE,c.TRADE_CLAUSE,c.ACCOUNTFOR,c.PRINT_STYLE,c.PRE_STATE,c.C_STATE,c.OUTPUT_STATE
+		
+		FROM contract_c c
+		where 1=1
+		<if test="c_state!=null"> and c.c_state=#{c_state}</if>
+	</select>
+	
+	<select id="get" parameterType="string" resultMap="contractRM">
+		select * from contract_c
+		where contract_id=#{pid}
+	</select>
+	
+	<select id="view" parameterType="string" resultMap="contractVORM">
+				SELECT
+				c.CONTRACT_ID,c.C_OFFER,c.CONTRACT_NUM,c.SIGN_DATE,c.CINPUT_BY,
+				c.CHECKED_BY,c.INSPECTOR,c.amount,c.IMPORTANCE_NUM,c.CREQUESTS,c.CUSTOMER,
+				c.DELIVERY_DATE,c.SHIP_DATE,c.TRADE_CLAUSE,c.ACCOUNTFOR,
+				c.PRINT_STYLE,c.PRE_STATE,c.C_STATE,c.OUTPUT_STATE,
+				c.created_by,c.created_dept,c.CREATED_DATE,
+			       
+			        t.contract_product_id,
+			        t.PRODUCT_NUM,t.PRODUCT_IMG,t.PRODUCT_DESCRIPTION,t.PRODUCT_NUMBER,
+			        t.OUTPUT_NUMBER,t.LOAD_RATE,t.BOXS_NUM,t.PACK_UNIT,t.PRODUCT_PRICE,
+			        t.PRODUCT_AMOUNT,t.FINISHED,t.exts,t.order_no,
+			        t.factory_id,t.factory_fullname,t.factory_shortname,t.factory_contacts,t.contactphone,
+			              
+			        t.ext_cproduct_id,
+			        t.ctype,t.ext_product_no,t.ext_product_image,t.ext_product_desc,t.ext_cnumber,t.ext_packing_unit,t.ext_price,t.ext_amount,t.product_request,
+			        t.ext_order_no,
+			        t.ext_factory_id,t.ext_full_name,t.ext_factory_name,t.ext_contacts,t.ext_phone
+			
+			FROM
+			(
+			      SELECT 
+			          contract_id,C_OFFER,CONTRACT_NUM,SIGN_DATE,CINPUT_BY,CHECKED_BY,
+			          inspector,AMOUNT,IMPORTANCE_NUM,CREQUESTS,CUSTOMER,DELIVERY_DATE,
+			          SHIP_DATE,TRADE_CLAUSE,ACCOUNTFOR,PRINT_STYLE,PRE_STATE,C_STATE,
+			          OUTPUT_STATE,created_by,created_dept,CREATED_DATE
+			       FROM contract_c 
+			) c
+			LEFT JOIN
+			(
+			       SELECT
+				      cp.contract_product_id,cp.contract_id,
+			              cp.PRODUCT_NUM,cp.PRODUCT_IMG,cp.PRODUCT_DESCRIPTION,cp.PRODUCT_NUMBER,
+			              cp.OUTPUT_NUMBER,cp.LOAD_RATE,cp.BOXS_NUM,cp.PACK_UNIT,
+			              cp.PRODUCT_PRICE,cp.PRODUCT_AMOUNT,cp.finished,cp.exts,cp.order_no,       
+			              cp.factory_id,cp.factory_fullname,cp.factory_shortname,cp.factory_contacts,cp.contactphone,
+			              
+			              ext.ext_cproduct_id,
+			              ext.ctype,ext.product_no AS ext_product_no,ext.product_image AS ext_product_image,
+			              ext.product_desc AS ext_product_desc,
+			              ext.cnumber AS ext_cnumber,ext.packing_unit AS ext_packing_unit,
+			              ext.price AS ext_price,ext.amount AS ext_amount,
+			              ext.product_request,ext.order_no AS ext_order_no,
+			              ext.factory_id AS ext_factory_id,ext.factory_fullname AS ext_full_name,
+			              ext.factory_shortname AS ext_factory_name,ext.factory_contacts AS ext_contacts,ext.contactphone AS ext_phone
+			              
+			        FROM
+			        (
+			            SELECT
+			              cp.contract_product_id,cp.contract_id,
+			              cp.PRODUCT_NUM,cp.PRODUCT_IMG,cp.PRODUCT_DESCRIPTION,cp.PRODUCT_NUMBER,
+			              cp.OUTPUT_NUMBER,cp.LOAD_RATE,cp.BOXS_NUM,cp.PACK_UNIT,
+			              cp.PRODUCT_PRICE,cp.PRODUCT_AMOUNT,cp.finished,cp.exts,cp.order_no,
+			              f.factory_id,f.factory_fullname,f.factory_shortname,f.factory_contacts,f.contactphone
+			            FROM
+			            (SELECT 
+			            contract_product_id,contract_id,factory_id,
+			            PRODUCT_NUM,PRODUCT_IMG,PRODUCT_DESCRIPTION,
+			            PRODUCT_NUMBER,OUTPUT_NUMBER,LOAD_RATE,BOXS_NUM,
+			            PACK_UNIT,PRODUCT_PRICE,PRODUCT_AMOUNT,finished,exts,order_no
+			             FROM contract_product_c) cp
+			            LEFT JOIN 
+			            (SELECT factory_id,factory_fullname,factory_shortname,factory_contacts,contactphone FROM factory_c) f
+			            ON cp.factory_id=f.factory_id
+			        ) cp
+			        LEFT JOIN
+			        (
+			            SELECT
+			              ext.ext_cproduct_id,ext.contract_product_id,
+			              ext.ctype,ext.product_no,ext.product_image,ext.product_desc,
+			              ext.cnumber,ext.packing_unit,ext.price,ext.amount,ext.product_request,ext.order_no,
+			              f.factory_id,f.factory_fullname,f.factory_shortname,f.factory_contacts,f.contactphone
+			            FROM
+			            (
+			            SELECT 
+			                ext_cproduct_id,contract_product_id,factory_id,
+			                ctype,product_no,product_image,product_desc,cnumber,packing_unit,price,amount,product_request,order_no
+			             FROM ext_cproduct_c 
+			            ) ext
+			            LEFT JOIN 
+			            (SELECT factory_id,factory_fullname,factory_shortname,factory_contacts,contactphone FROM factory_c) f
+			            ON ext.factory_id=f.factory_id
+			        ) ext
+			        ON cp.contract_product_id=ext.contract_product_id
+			) t
+			ON c.contract_id=t.contract_id
+ 
+		where c.contract_id=#{contractId}
+	</select>
+	
+	
+	<insert id="insert" parameterType="com.city.my.domain.Contract">
+		insert into contract_c(
+		CONTRACT_ID,c_offer,contract_num,sign_date,cinput_by,checked_by,inspector,amount,
+			importance_num,crequests,customer,delivery_date,ship_date,trade_clause,accountfor,print_style,pre_state,c_state,output_state,
+			created_by,created_dept,created_date
+		)values(
+			#{id},
+			#{c_offer},
+			#{contract_num},
+			#{sign_date},
+			#{cinput_by},
+			#{checked_by},
+			#{inspector},
+			#{amount},
+			#{importance_num},
+			#{crequests},
+			#{customer},
+			#{delivery_date},
+			#{ship_date},
+			#{trade_clause},
+			#{accountfor},
+			#{print_style},
+			#{pre_state},
+			#{c_state},
+			#{output_state},
+			#{created_by},
+			#{created_dept},
+			#{created_date}
+		)
+	</insert>
+	
+	<update id="update" parameterType="com.city.my.domain.Contract">
+		update contract_c
+		<set>
+			<if test="c_offer != null">c_offer=#{c_offer},</if>
+			<if test="contract_num != null">contract_num=#{contract_num},</if>
+			<if test="sign_date != null">sign_date=#{sign_date},</if>
+			<if test="cinput_by != null">cinput_by=#{cinput_by},</if>
+			<if test="checked_by != null">checked_by=#{checked_by},</if>
+			<if test="inspector != null">INSPECTOR=#{inspector},</if>
+			<if test="amount != null">amount=#{amount},</if>
+			<if test="importance_num != null">importance_num=#{importance_num},</if>
+			<if test="crequests != null">crequests=#{crequests},</if>
+			<if test="customer != null">customer=#{customer},</if>
+			<if test="delivery_date != null">delivery_date=#{delivery_date},</if>
+			<if test="ship_date != null">ship_date=#{ship_date},</if>
+			<if test="trade_clause != null">trade_clause=#{trade_clause},</if>
+			<if test="accountfor != null">accountfor=#{accountfor},</if>
+			<if test="print_style != null">print_style=#{print_style},</if>
+			<if test="pre_state != null">pre_state=#{pre_state},</if>
+			<if test="c_state != null">c_state=#{c_state},</if>
+			<if test="output_state != null">output_state=#{output_state},</if>
+		</set>
+		where contract_id=#{id}
+	</update>
+	
+	<!-- 删除一条 -->
+	<delete id="deleteById" parameterType="string">
+		delete from contract_c
+		where contract_id=#{pid}
+	</delete>
+	
+	<!-- 删除多条（一维字符串数组） -->
+	<delete id="delete" parameterType="string">
+		delete from contract_c
+		where contract_id in
+		<foreach collection="array" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<!-- 修改状态 -->
+	<update id="updateState" parameterType="map">
+		update contract_c set c_state=#{c_state}
+		where contract_id in
+		<foreach collection="ids" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</update>
+</mapper>

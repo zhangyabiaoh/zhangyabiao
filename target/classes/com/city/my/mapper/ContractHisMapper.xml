@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.city.my.mapper.ContractHisMapper">
+	<resultMap type="com.city.my.domain.Contract" id="contractHisRM">
+		<id property="id" column="CONTRACT_ID"/>
+		
+		<result property="cpnum" column="CPNUM"/>
+		<result property="extnum" column="EXTNUM"/> 
+		
+		<result property="c_offer" column="c_offer"/>
+		<result property="contract_num" column="contract_num"/>
+		<result property="sign_date" column="sign_date"/>
+		<result property="cinput_by" column="cinput_by"/>
+		<result property="checked_by" column="checked_by"/>
+		<result property="inspector" column="INSPECTOR"/>
+		<result property="amount" column="amount"/>
+		<result property="importance_num" column="importance_num"/>
+		<result property="crequests" column="crequests"/>
+		<result property="customer" column="customer"/>
+		<result property="delivery_date" column="delivery_date"/>	
+		<result property="ship_date" column="ship_date"/>
+		<result property="trade_clause" column="trade_clause"/>
+		<result property="accountfor" column="accountfor"/>
+		<result property="print_style" column="print_style"/>
+		<result property="pre_state" column="pre_state"/>
+		<result property="c_state" column="c_state"/>
+		<result property="output_state" column="output_state"/>
+		
+		<result property="created_by" column="created_by"/>
+		<result property="created_dept" column="created_dept"/>
+		<result property="created_date" column="created_date"/>	
+	</resultMap>
+	
+	
+	<resultMap type="com.city.my.vo.ContractVO" id="contractHisVORM" extends="contractHisRM">
+	
+		<collection property="contractProducts" ofType="com.city.my.vo.ContractProductVO">
+			<id property="id" column="CONTRACT_PRODUCT_ID"/>
+			<result property="product_num" column="PRODUCT_NUM"/>
+			<result property="product_img" column="PRODUCT_IMG"/>
+			<result property="product_description" column="product_description"/>
+			<result property="product_number" column="product_number"/>
+			<result property="output_number" column="output_number"/>
+			<result property="load_rate" column="load_rate"/>
+			<result property="boxs_num" column="boxs_num"/>
+			<result property="pack_unit" column="pack_unit"/>
+			<result property="product_price" column="product_price"/>
+			<result property="product_amount" column="product_amount"/>
+			<result property="finised" column="finised"/>
+			<result property="exts" column="EXTS"/>
+			<result property="orderno" column="ORDER_NO"/>
+			
+	
+			<association property="factory" javaType="com.city.my.domain.Factory">
+				<id property="id" column="FACTORY_ID"/>
+				<result property="fullName" column="factory_fullname"/>
+				<result property="factoryName" column="factory_shortname"/>
+				<result property="contacts" column="factory_contacts"/>
+				<result property="phone" column="contactphone"/>
+			</association>
+			
+			<collection property="extCproducts" ofType="com.city.my.vo.ExtCproductVO">
+				<id property="id" column="EXT_CPRODUCT_ID"/>
+	
+				<result property="ctype" column="CTYPE"/>
+				
+				<result property="productNo" column="EXT_PRODUCT_NO"/>
+				<result property="productImage" column="EXT_PRODUCT_IMAGE"/>
+				<result property="productDesc" column="EXT_PRODUCT_DESC"/>
+				<result property="cnumber" column="EXT_CNUMBER"/>
+				<result property="packingUnit" column="EXT_PACKING_UNIT"/>
+				<result property="price" column="EXT_PRICE"/>
+				<result property="amount" column="EXT_AMOUNT"/>
+				<result property="productRequest" column="PRODUCT_REQUEST"/>
+				<result property="orderNo" column="EXT_ORDER_NO"/>	
+				
+				<association property="factory" javaType="com.city.my.domain.Factory">
+					<id property="id" column="EXT_FACTORY_ID"/>
+					<result property="fullName" column="EXT_FULL_NAME"/>
+					<result property="factoryName" column="EXT_FACTORY_NAME"/>
+					<result property="contacts" column="EXT_CONTACTS"/>
+					<result property="phone" column="ext_phone"/>
+				</association>
+			</collection>
+		</collection>
+	</resultMap>
+	
+	
+	<select id="find" parameterType="map" resultMap="contractHisRM">
+		SELECT 
+		  (SELECT COUNT(*) FROM contract_product_c
+		  WHERE contract_id=c.contract_id)  AS cpnum,
+		  (SELECT COUNT(*) FROM ext_cproduct_c
+		          WHERE contract_product_id IN (SELECT contract_product_id FROM contract_product_c WHERE contract_id=c.contract_id)
+		      ) AS extnum,
+		  ( 
+		      IFNULL((SELECT SUM(PRODUCT_NUMBER*PRODUCT_PRICE) AS cptotal FROM contract_product_c
+		      WHERE contract_id =c.contract_id),0)
+		      +
+		      IFNULL(
+		      (SELECT SUM(cnumber*price) AS exttotal FROM ext_cproduct_c
+		       WHERE contract_product_id IN (SELECT contract_product_id FROM contract_product_c WHERE contract_id=c.contract_id))
+		       ,0)
+		  ) AS AMOUNT,
+		c.CONTRACT_ID,c.C_OFFER,c.CONTRACT_NUM,c.SIGN_DATE,c.CINPUT_BY,c.CHECKED_BY,c.INSPECTOR,c.IMPORTANCE_NUM,c.CREQUESTS,c.CUSTOMER,
+		c.DELIVERY_DATE,c.SHIP_DATE,c.TRADE_CLAUSE,c.ACCOUNTFOR,c.PRINT_STYLE,c.PRE_STATE,c.C_STATE,c.OUTPUT_STATE
+		
+		FROM contract_c c
+		where 1=1
+		<if test="c_state!=null"> and c.c_state=#{c_state}</if>
+	</select>
+	
+	<select id="view" parameterType="string" resultMap="contractHisVORM">
+				SELECT
+				c.CONTRACT_ID,c.C_OFFER,c.CONTRACT_NUM,c.SIGN_DATE,c.CINPUT_BY,
+				c.CHECKED_BY,c.INSPECTOR,c.amount,c.IMPORTANCE_NUM,c.CREQUESTS,c.CUSTOMER,
+				c.DELIVERY_DATE,c.SHIP_DATE,c.TRADE_CLAUSE,c.ACCOUNTFOR,
+				c.PRINT_STYLE,c.PRE_STATE,c.C_STATE,c.OUTPUT_STATE,
+				c.created_by,c.created_dept,c.CREATED_DATE,
+			       
+			        t.contract_product_id,
+			        t.PRODUCT_NUM,t.PRODUCT_IMG,t.PRODUCT_DESCRIPTION,t.PRODUCT_NUMBER,
+			        t.OUTPUT_NUMBER,t.LOAD_RATE,t.BOXS_NUM,t.PACK_UNIT,t.PRODUCT_PRICE,
+			        t.PRODUCT_AMOUNT,t.FINISHED,t.exts,t.order_no,
+			        t.factory_id,t.factory_fullname,t.factory_shortname,t.factory_contacts,t.contactphone,
+			              
+			        t.ext_cproduct_id,
+			        t.ctype,t.ext_product_no,t.ext_product_image,t.ext_product_desc,t.ext_cnumber,t.ext_packing_unit,t.ext_price,t.ext_amount,t.product_request,
+			        t.ext_order_no,
+			        t.ext_factory_id,t.ext_full_name,t.ext_factory_name,t.ext_contacts,t.ext_phone
+			
+			FROM
+			(
+			      SELECT 
+			          contract_id,C_OFFER,CONTRACT_NUM,SIGN_DATE,CINPUT_BY,CHECKED_BY,
+			          inspector,AMOUNT,IMPORTANCE_NUM,CREQUESTS,CUSTOMER,DELIVERY_DATE,
+			          SHIP_DATE,TRADE_CLAUSE,ACCOUNTFOR,PRINT_STYLE,PRE_STATE,C_STATE,
+			          OUTPUT_STATE,created_by,created_dept,CREATED_DATE
+			       FROM contract_c 
+			) c
+			LEFT JOIN
+			(
+			       SELECT
+				      cp.contract_product_id,cp.contract_id,
+			              cp.PRODUCT_NUM,cp.PRODUCT_IMG,cp.PRODUCT_DESCRIPTION,cp.PRODUCT_NUMBER,
+			              cp.OUTPUT_NUMBER,cp.LOAD_RATE,cp.BOXS_NUM,cp.PACK_UNIT,
+			              cp.PRODUCT_PRICE,cp.PRODUCT_AMOUNT,cp.finished,cp.exts,cp.order_no,       
+			              cp.factory_id,cp.factory_fullname,cp.factory_shortname,cp.factory_contacts,cp.contactphone,
+			              
+			              ext.ext_cproduct_id,
+			              ext.ctype,ext.product_no AS ext_product_no,ext.product_image AS ext_product_image,
+			              ext.product_desc AS ext_product_desc,
+			              ext.cnumber AS ext_cnumber,ext.packing_unit AS ext_packing_unit,
+			              ext.price AS ext_price,ext.amount AS ext_amount,
+			              ext.product_request,ext.order_no AS ext_order_no,
+			              ext.factory_id AS ext_factory_id,ext.factory_fullname AS ext_full_name,
+			              ext.factory_shortname AS ext_factory_name,ext.factory_contacts AS ext_contacts,ext.contactphone AS ext_phone
+			              
+			        FROM
+			        (
+			            SELECT
+			              cp.contract_product_id,cp.contract_id,
+			              cp.PRODUCT_NUM,cp.PRODUCT_IMG,cp.PRODUCT_DESCRIPTION,cp.PRODUCT_NUMBER,
+			              cp.OUTPUT_NUMBER,cp.LOAD_RATE,cp.BOXS_NUM,cp.PACK_UNIT,
+			              cp.PRODUCT_PRICE,cp.PRODUCT_AMOUNT,cp.finished,cp.exts,cp.order_no,
+			              f.factory_id,f.factory_fullname,f.factory_shortname,f.factory_contacts,f.contactphone
+			            FROM
+			            (SELECT 
+			            contract_product_id,contract_id,factory_id,
+			            PRODUCT_NUM,PRODUCT_IMG,PRODUCT_DESCRIPTION,
+			            PRODUCT_NUMBER,OUTPUT_NUMBER,LOAD_RATE,BOXS_NUM,
+			            PACK_UNIT,PRODUCT_PRICE,PRODUCT_AMOUNT,finished,exts,order_no
+			             FROM contract_product_c) cp
+			            LEFT JOIN 
+			            (SELECT factory_id,factory_fullname,factory_shortname,factory_contacts,contactphone FROM factory_c) f
+			            ON cp.factory_id=f.factory_id
+			        ) cp
+			        LEFT JOIN
+			        (
+			            SELECT
+			              ext.ext_cproduct_id,ext.contract_product_id,
+			              ext.ctype,ext.product_no,ext.product_image,ext.product_desc,
+			              ext.cnumber,ext.packing_unit,ext.price,ext.amount,ext.product_request,ext.order_no,
+			              f.factory_id,f.factory_fullname,f.factory_shortname,f.factory_contacts,f.contactphone
+			            FROM
+			            (
+			            SELECT 
+			                ext_cproduct_id,contract_product_id,factory_id,
+			                ctype,product_no,product_image,product_desc,cnumber,packing_unit,price,amount,product_request,order_no
+			             FROM ext_cproduct_c 
+			            ) ext
+			            LEFT JOIN 
+			            (SELECT factory_id,factory_fullname,factory_shortname,factory_contacts,contactphone FROM factory_c) f
+			            ON ext.factory_id=f.factory_id
+			        ) ext
+			        ON cp.contract_product_id=ext.contract_product_id
+			) t
+			ON c.contract_id=t.contract_id
+ 
+		where c.contract_id=#{contractId}
+	</select>
+
+	<!-- 删除 -->
+</mapper>
+
+

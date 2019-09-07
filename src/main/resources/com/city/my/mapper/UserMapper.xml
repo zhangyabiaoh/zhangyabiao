@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.city.my.mapper.UserMapper">
+	<resultMap type="com.city.my.domain.User" id="userRM">
+		<id property="id" column="user_id"/>
+		<result property="user_name" column="user_name"/>
+		<result property="sex" column="sex"/>
+		<result property="phone" column="phone"/>
+		<result property="email" column="email"/>
+		<result property="login_name" column="login_name"/> 	
+		<result property="login_password" column="login_password"/>
+		<result property="position" column="position"/>
+		<result property="deptname" column="deptname"/>
+	</resultMap>
+	<select id="find" parameterType="map" resultMap="userRM">
+		select * from user_c
+		where 1=1
+	</select>
+	
+	<select id="get" parameterType="string" resultMap="userRM">
+		select * from user_c
+		where user_id=#{pid}
+	</select>
+	
+	 <insert id="insert" parameterType="com.city.my.domain.User">
+	insert into user_c
+	(user_id,user_name,sex,phone,email,login_name,login_password,position,deptname)
+	values
+	(#{id},#{user_name},#{sex},#{phone},#{email},#{login_name},#{login_password},#{position},#{deptname})
+	</insert> 
+	
+	<!-- 删除一条 -->
+	<delete id="deleteById" parameterType="string">
+		delete from user_c
+		where user_id=#{pid}
+	</delete>
+	
+	<!-- 删除多条（一维字符串数组） -->
+	<delete id="delete" parameterType="string">
+		delete from user_c
+		where user_id in
+		<foreach collection="array" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

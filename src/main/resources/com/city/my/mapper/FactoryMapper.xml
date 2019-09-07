@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.city.my.mapper.FactoryMapper">
+	<!-- 数据库表映射 -->
+	<resultMap type="com.city.my.domain.Factory" id="factoryRM">
+		<!--主键-->
+		<id property="id" column="FACTORY_ID"/>
+		<!--一般属性-->
+		<result property="fullName" column="factory_fullname"/>
+		<result property="factoryName" column="factory_shortname"/>
+		<result property="contacts" column="factory_contacts"/>
+		<result property="phone" column="contactphone"/>
+		<result property="mobile" column="contactmobile"/>
+		<result property="fax" column="companyfax"/>
+		<result property="cnote" column="companycnote"/>
+		<result property="inspetor" column="companyinspetor"/>
+		<result property="orderNo" column="ORDER_NO"/>
+		<result property="state" column="state"/>
+		
+		<result property="createBy" column="created_by"/>
+		<result property="createDept" column="created_dept"/>
+		<result property="createTime" column="created_time"/>		
+	</resultMap>
+	<!--查询-->
+	<select id="find" parameterType="map"  resultMap="factoryRM">
+		select * from factory_c
+		where 1=1
+		<if test="state!=null"> and STATE=#{state}</if>
+	</select>
+	<!-- 查询一个 -->
+	<select id="get" parameterType="string" resultMap="factoryRM">
+		select * from factory_c
+		where factory_id=#{pid}
+	</select>
+	<!-- 增加 -->
+	 <insert id="insert" parameterType="com.city.my.domain.Factory">
+	insert into factory_c
+	(FACTORY_ID,factory_fullname,factory_shortname,factory_contacts,contactphone,contactmobile,companyfax,companycnote,companyinspetor,state,ORDER_NO,created_by,created_dept,created_time)
+	values
+	(#{id},#{fullName},#{factoryName},#{contacts},#{phone},#{mobile},#{fax},#{cnote},#{inspetor},#{orderNo},#{state},#{createBy},#{createDept},#{createTime})
+	
+	</insert> 
+	
+	<!-- 修改 -->
+	<update id="update" parameterType="com.city.my.domain.Factory">
+	update factory_c
+	<set>
+			<if test="fullName != null">factory_fullname=#{fullName},</if>
+			<if test="factoryName != null">factory_shortname=#{factoryName},</if>
+			<if test="contacts != null">factory_contacts=#{contacts},</if>
+			<if test="phone != null">contactphone=#{phone},</if>
+			<if test="mobile != null">contactmobile=#{mobile},</if>
+			<if test="fax != null">companyfax=#{fax},</if>
+			<if test="cnote != null">companycnote=#{cnote},</if>
+			<if test="inspetor != null">companyinspetor=#{inspetor},</if>
+			<if test="orderNo != null">ORDER_NO=#{orderNo},</if>
+			<if test="state != null">STATE=#{state},</if>
+		</set>
+		where FACTORY_ID=#{id}
+	</update>
+	<!-- 删除一条 -->
+	<delete id="deleteById" parameterType="string">
+		delete from factory_c
+		where FACTORY_ID=#{pid}
+	</delete>
+	<!-- 删除多条（一维字符串数组） -->
+	<delete id="delete" parameterType="string">
+		delete from factory_c
+		where FACTORY_ID in
+		<foreach collection="array" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+	<!-- 修改状态 -->
+	<update id="updateState" parameterType="map">
+		update factory_c set state=#{state}
+		where FACTORY_ID in
+		<foreach collection="ids" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</update>
+	
+
+</mapper>

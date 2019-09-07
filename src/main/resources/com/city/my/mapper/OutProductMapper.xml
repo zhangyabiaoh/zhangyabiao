@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.city.my.mapper.OutProductMapper">
+	<resultMap type="com.city.my.vo.OutProductVO" id="outProductRM">
+		<result property="customName" column="CUSTOMER"/>
+		<result property="contractNo" column="CONTRACT_NUM"/>
+		<result property="productNo" column="PRODUCT_NUM"/>
+		<result property="cnumber" column="CNUMBER"/>
+		<result property="factoryName" column="FACTORY_NAME"/>
+		<result property="deliveryPeriod" column="DELIVERY_PERIOD"/>
+		<result property="shipTime" column="SHIP_TIME"/>
+		<result property="tradeTerms" column="TRADE_CLAUSE"/>
+	</resultMap>
+	
+	<!-- 按船期查询某个月的购销合同统计 -->
+	<select id="find" parameterType="string" resultMap="outProductRM">
+		select
+		 	 c.CUSTOMER,c.CONTRACT_NUM,date_format(c.DELIVERY_DATE,'%Y-%m-%d') as delivery_period,
+		 	 date_format(c.SHIP_DATE,'%Y-%m') as ship_time,c.TRADE_CLAUSE,
+		  	cp.PRODUCT_NUM,concat(cp.PRODUCT_NUMBER,cp.PACK_UNIT) as cnumber,cp.factory_name
+			from
+			(select contract_id,CUSTOMER,CONTRACT_NUM,DELIVERY_DATE,SHIP_DATE,TRADE_CLAUSE from contract_c) c
+			left join
+			(select contract_id,PRODUCT_NUM,PRODUCT_NUMBER,PACK_UNIT,factory_name from contract_product_c) cp
+			on c.contract_id=cp.contract_id
+		where date_format(c.SHIP_DATE,'%Y-%m') = #{inputDate}
+	
+	</select>
+	
+</mapper>
